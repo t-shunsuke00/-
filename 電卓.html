@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High School Math Calculator</title>
+    <meta name="description" content="高校数学向け高機能Web電卓（数式処理・グラフ描画対応）">
+
+    <!-- Google Fonts: BIZ UDPGothic (UDフォント) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX: 美しい数式表示用 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    
+    <!-- Math.js: 数式処理・高度な計算用 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    
+    <!-- Chart.js: グラフ描画用 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 電卓セクション -->
+        <main class="calculator">
+            <div class="display">
+                <div class="top-bar">
+                    <div class="angle-toggle" aria-label="角度モード切替">
+                        <input type="radio" id="deg" name="angle" value="deg" checked>
+                        <label for="deg">DEG</label>
+                        <input type="radio" id="rad" name="angle" value="rad">
+                        <label for="rad">RAD</label>
+                    </div>
+                    <button id="graph-btn" class="graph-btn" aria-label="グラフ描画">📈 グラフ描画</button>
+                </div>
+                
+                <div class="expression-area">
+                    <div id="expression-display" class="expression-display"></div>
+                </div>
+                <div class="result-area">
+                    <div id="result-display" class="result-display">0</div>
+                </div>
+            </div>
+
+            <!-- 5列のグリッドレイアウトのボタン群 -->
+            <div class="buttons">
+                <!-- Row 1: 数学関数群 -->
+                <button class="btn func" data-val="sqrt(">√</button>
+                <button class="btn func" data-val="nthRoot(">ⁿ√</button>
+                <button class="btn func" data-val="^2">x²</button>
+                <button class="btn func" data-val="^3">x³</button>
+                <button class="btn func" data-val="^">xʸ</button>
+
+                <!-- Row 2: 三角関数 -->
+                <button class="btn func" data-val="sin(">sin</button>
+                <button class="btn func" data-val="cos(">cos</button>
+                <button class="btn func" data-val="tan(">tan</button>
+                <button class="btn func" data-val="asin(">asin</button>
+                <button class="btn func" data-val="acos(">acos</button>
+                
+                <!-- Row 3: 対数と定数 -->
+                <button class="btn func" data-val="atan(">atan</button>
+                <button class="btn func" data-val="log10(">log</button>
+                <button class="btn func" data-val="log(">ln</button>
+                <button class="btn func" data-val="pi">π</button>
+                <button class="btn func" data-val="e">e</button>
+
+                <!-- Row 4: その他の数学関数 -->
+                <button class="btn func" data-val="!">n!</button>
+                <button class="btn func" data-val="abs(">|x|</button>
+                <button class="btn func" data-val="(">(</button>
+                <button class="btn func" data-val=")">)</button>
+                <button class="btn func var-x" data-val="x">x</button>
+                
+                <!-- Row 5: 制御と基本演算 -->
+                <button class="btn clear span-2" data-action="clear">AC</button>
+                <button class="btn delete" data-action="delete">DEL</button>
+                <button class="btn operator" data-val="/">÷</button>
+                <button class="btn func" data-val="%">%</button>
+
+                <!-- Row 6: 数字と乗算 -->
+                <button class="btn number" data-val="7">7</button>
+                <button class="btn number" data-val="8">8</button>
+                <button class="btn number" data-val="9">9</button>
+                <button class="btn operator" data-val="*">×</button>
+                <button class="btn func fraction-toggle" data-action="fraction">S⇔D</button> <!-- 分数⇔小数 切替 -->
+
+                <!-- Row 7: 数字と減算 -->
+                <button class="btn number" data-val="4">4</button>
+                <button class="btn number" data-val="5">5</button>
+                <button class="btn number" data-val="6">6</button>
+                <button class="btn operator" data-val="-">−</button>
+                <button class="btn func" data-action="ans">Ans</button>
+
+                <!-- Row 8: 数字と加算 -->
+                <button class="btn number" data-val="1">1</button>
+                <button class="btn number" data-val="2">2</button>
+                <button class="btn number" data-val="3">3</button>
+                <button class="btn operator" data-val="+">＋</button>
+                <button class="btn equals span-1-vert" data-action="equals">＝</button> <!-- = は縦に2マス使う -->
+
+                <!-- Row 9: 0と小数点 -->
+                <button class="btn number span-2" data-val="0">0</button>
+                <button class="btn number" data-val=".">.</button>
+                <button class="btn func" data-action="negate">+/-</button>
+            </div>
+        </main>
+
+        <!-- グラフセクション -->
+        <aside class="graph-section">
+            <div class="graph-header">
+                <h2>関数グラフ</h2>
+                <div class="graph-formula" id="graph-formula-display">y = f(x)</div>
+            </div>
+            <div class="graph-container">
+                <canvas id="graphCanvas"></canvas>
+            </div>
+        </aside>
+    </div>
+    
+    <!-- 実装ロジック -->
+    <script src="script.js"></script>
+</body>
+</html>
